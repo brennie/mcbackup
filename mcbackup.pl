@@ -7,6 +7,7 @@
 use strict;
 
 use Archive::Tar;
+use Fcntl;
 use File::Find;
 use File::Path;
 use File::stat;
@@ -48,6 +49,7 @@ my $address = "";
 # End configuration
 
 my @errors;
+my $lock;
 
 sub error($) { push(@errors, pop()); }
 
@@ -134,7 +136,7 @@ sub clean($)
 $mcdir .= "/" unless (substr($mcdir, -1) eq "/");
 $backups .= "/" unless (substr($backups, -1) eq "/");
 
-if (-e "${mcdir}server.log.lck")
+if (-e "${mcdir}pidfile")
 {
 	mcsend("say Backing up all worlds...");
 
@@ -143,6 +145,13 @@ if (-e "${mcdir}server.log.lck")
 	
 	# We must wait for the map to save, but it does not take very long.
 	sleep(2);
+}
+elsif(!sysopen($lock, "${mcdir}pidfile", O_CREAT | O_EXCL))
+{
+	error("Could not lock directory: $!");
+	error("The backup was not ran!");
+	mail_errors();
+	exit(1);
 }
 
 foreach my $world (@worlds)
@@ -166,11 +175,18 @@ foreach my $world (@worlds)
 	clean($world . "_nether");
 }
 
-if (-e "${mcdir}server.log.lck")
+if (-e "${mcdir}pidfile")
 {
-	mcsend("save-on");
-	
-	mcsend("Backup completed.");
+	if ($lock)
+	{
+		close($lock) or error("Could not close lockfile: $!");
+		unlink($lock) or error("Could not delete lockfile: $!");
+	}
+	else
+	{
+		mcsend("save-on");
+		mcsend("Backup completed.");
+	}
 }
 
 if (@errors && $sendmail)
