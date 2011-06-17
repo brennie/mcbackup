@@ -32,6 +32,7 @@ my $backups = "";
 my $numbackups = 1;
 
 # The format to pass to strftime; the default is YYYY-MM-DD.
+# Backups will be of the format world_date.tar.bz2
 my $datefmt = "%Y-%m-%d";
 
 # The worlds to backup (do not include nether worlds).
@@ -79,7 +80,7 @@ sub mail_errors()
 sub backup($)
 {
 	my $subdir = pop();
-	my $backups = "${backups}${subdir}";
+	my $path = "${backups}${subdir}";
 	my $date = date();
 	my $archive = "${path}/${subdir}_${date}.tar.bz2";
 	my @files;
@@ -95,17 +96,17 @@ sub backup($)
 		}
 	};
 
-	if (! -e $backups)
+	if (! -e $path)
 	{
-		if (!make_path($backups))
+		if (!make_path($path))
 		{
 			error("Could not create path \"${path}\": $!");
 			return;
 		}
 	}
-	elsif (! -d $backups)
+	elsif (! -d $path)
 	{
-		error("${backups} is not a directory!");
+		error("${path} is not a directory!");
 		return;
 	}
 
