@@ -77,8 +77,9 @@ sub mail_errors()
 sub backup($)
 {
 	my $subdir = pop();
+	my $backups = "${backups}${subdir}";
 	my $date = date();
-	my $archive = "${backups}${subdir}/${subdir}_${date}.tar.bz2";
+	my $archive = "${path}/${subdir}_${date}.tar.bz2";
 	my @files;
 	
 	# Strip $mcdir from all file paths; the resulting file paths are relative to
@@ -86,16 +87,24 @@ sub backup($)
 	
 	my $pusher = sub
 	{
-		push(@files, substr($File::Find::name, length($mcdir)));
+		if ($_ ne "session.lock")
+		{
+			push(@files, substr($File::Find::name, length($mcdir)));
+		}
 	};
 
-	if (! -e "${backups}${subdir}")
+	if (! -e $backups)
 	{
-		if (!make_path("${backups}${subdir}"))
+		if (!make_path($backups))
 		{
-			error("Could not create path \"${backups}${subdir}\": $!");
+			error("Could not create path \"${path}\": $!");
 			return;
 		}
+	}
+	elsif (! -d $backups)
+	{
+		error("${backups} is not a directory!");
+		return;
 	}
 
 	find($pusher, "${mcdir}${subdir}");
@@ -109,13 +118,10 @@ sub backup($)
 sub clean($)
 {
 	my $subdir = pop();
-	my %mtimes;
-	my @files;
-
-	%mtimes = map { $_ => stat($_)->mtime } glob("${subdir}_*.tar.bz2");
-
+	my %mtimes = map { $_ => stat($_)->mtime } glob("${subdir}_*.tar.bz2");
+	
 	# Sort in reverse to get the oldest files first.
-	@files = sort {$mtimes{$b} <=> $mtimes{$a}} keys(%mtimes);
+	my @files = sort {$mtimes{$b} <=> $mtimes{$a}} keys(%mtimes);
 
 	while ($#files > $numbackups)
 	{
