@@ -186,7 +186,7 @@ if (-e "${mcdir}pidfile")
 	else
 	{
 		mcsend("save-on");
-		mcsend("Backup completed.");
+		mcsend("say Backup completed.");
 	}
 }
 
