@@ -112,7 +112,7 @@ sub backup($)
 
 	find($pusher, "${mcdir}${subdir}");
 	
-	if (!Archive::Tar->create_archive($archive, "bzip2", @files))
+	if (!Archive::Tar->create_archive($archive, Archive::Tar::COMPRESS_BZIP, @files))
 	{
 		error("${Archive::Tar::error} (${archive})");
 	}
