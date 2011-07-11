@@ -35,7 +35,7 @@ my $numbackups = 1;
 # Backups will be of the format world_date.tar.bz2
 my $datefmt = "%Y-%m-%d";
 
-# The worlds to backup (do not include nether worlds).
+# The worlds to backup.
 my @worlds = ();
 
 # The path to sendmail (usually /usr/sbin/sendmail); leave it blank to disable.
@@ -164,7 +164,6 @@ foreach my $world (@worlds)
 	}
 	
 	backup($world);
-	backup($world . "_nether");
 	
 	if (!chdir("${backups}${world}"))
 	{
@@ -173,7 +172,6 @@ foreach my $world (@worlds)
 	}
 	
 	clean($world);
-	clean($world . "_nether");
 }
 
 if (-e "${mcdir}pidfile")
